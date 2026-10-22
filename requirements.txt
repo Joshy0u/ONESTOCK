@@ -1,2 +1,9 @@
 pymysql
 cryptography
+python-dotenv
+dotenv
+fastapi
+uvicorn
+sqlalchemy
+databases
+aiomysql
