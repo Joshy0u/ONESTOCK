@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models import Carrier
+from models import Carrier, Product
 
 def get_carrier(db: Session, carrier_id: int):
     return db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
@@ -14,3 +14,13 @@ def create_carrier(db: Session, name: str, code: str, contact_phone: str):
     db.commit()
     db.refresh(db_carrier)
     return db_carrier
+
+def get_product(db: Session, product_id: int):
+    return db.query(Product).filter(Product.product_id == product_id).first()
+
+def create_product(db: Session, name: str, sku: str, uom_id: int, list_price: float=None):
+    db_product = Product(name=name, sku=sku, uom_id=uom_id, list_price=list_price)
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product

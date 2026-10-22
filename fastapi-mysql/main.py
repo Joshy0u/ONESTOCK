@@ -3,8 +3,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
-from models import Base, Carrier
+from models import Base, Carrier, Product
 from crud import get_carrier, create_carrier
+from crud import get_product, create_product
 
 app = FastAPI()
 
@@ -53,3 +54,15 @@ async def delete_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)
 
     return {"detail": "Carrier deleted"}
 
+# BELOW ARE THE ENDPOINTS FOR THE PRODUCTS TABLE. 
+
+@app.post("/products")
+async def create_product_endpoint(name: str, sku: str, uom_id: int, list_price: float = None, db: Session = Depends(get_db)):
+    return create_product(db=db, name=name, sku=sku, uom_id=uom_id, list_price=list_price)
+
+@app.get("/products/{product_id}")
+async def get_product_endpoint(product_id: int, db: Session = Depends(get_db)):
+    product = get_product(db, product_id=product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
