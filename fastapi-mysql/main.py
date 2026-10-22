@@ -21,16 +21,16 @@ def get_db():
 async def create_carrier_endpoint(name: str, code: str, contact_phone: str, db: Session = Depends(get_db)):
     return create_carrier(db, name, code, contact_phone)
 
-@app.get("/items/{item_id}")
+@app.get("/carriers/{carrier_id}")
 async def get_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
     carrier = get_carrier(db, carrier_id)
     if carrier is None:
         raise HTTPException(status_code=404, detail="Carrier not found")
     return carrier
 
-@app.put("/items/{item_id}")
+@app.put("/carriers/{carrier_id}")
 async def update_carrier_endpoint(carrier_id: int, name: str, code: str, contact_phone: str, db: Session = Depends(get_db)):
-    carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier.id).first()
+    carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
     if carrier is None:
         raise HTTPException(status_code=404, detail="Carrier not found")
 
@@ -42,14 +42,14 @@ async def update_carrier_endpoint(carrier_id: int, name: str, code: str, contact
 
     return carrier
 
-@app.delete("/item/{item_id}")
+@app.delete("/carriers/{carrier_id}")
 async def delete_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
     carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
     if carrier is None:
         raise HTTPException(status_code=404, detail="Carrier not found")
 
-    db.delete(Carrier)
+    db.delete(carrier)
     db.commit()
 
-    return {"detail": "Item deleted"}
+    return {"detail": "Carrier deleted"}
 

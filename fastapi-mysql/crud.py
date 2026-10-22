@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from models import Carrier
 
 def get_carrier(db: Session, carrier_id: int):
-    return db.query(Carrier).filter(Carrier.id == carrier_id).first()
+    return db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
     # db.query = SELECT*FROM TABLE (Item is the table object)
     # Filter is the WHERE part in the statement, matching the requested to the db.
     # first is the LIMIT function. (just returns the first result.)
