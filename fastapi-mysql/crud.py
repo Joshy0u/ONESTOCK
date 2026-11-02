@@ -18,6 +18,12 @@ def create_carrier(db: Session, name: str, code: str, contact_phone: str):
 def get_product(db: Session, product_id: int):
     return db.query(Product).filter(Product.product_id == product_id).first()
 
+def get_products(db: Session):
+    return db.query(Product).all()
+
+def get_product_by_name(db: Session, query: str):
+    return db.query(Product).filter(Product.name.ilike(f"%{query}%")).limit(25).all()
+
 def create_product(db: Session, name: str, sku: str, uom_id: int, list_price: float=None):
     db_product = Product(name=name, sku=sku, uom_id=uom_id, list_price=list_price)
     db.add(db_product)

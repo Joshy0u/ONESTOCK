@@ -1,13 +1,23 @@
 # API ENDPOINTS TIME!!!
 
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 from models import Base, Carrier, Product
 from crud import get_carrier, create_carrier
-from crud import get_product, create_product
+from crud import get_products, get_product, create_product
+from crud import get_product_by_name
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create tables? (i can skip this step, tables already exist)
 
@@ -56,7 +66,7 @@ async def delete_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)
 
 # BELOW ARE THE ENDPOINTS FOR THE PRODUCTS TABLE. 
 
-@app.post("/products")
+@app.post("/products/")
 async def create_product_endpoint(name: str, sku: str, uom_id: int, list_price: float = None, db: Session = Depends(get_db)):
     return create_product(db=db, name=name, sku=sku, uom_id=uom_id, list_price=list_price)
 
@@ -66,3 +76,12 @@ async def get_product_endpoint(product_id: int, db: Session = Depends(get_db)):
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
+
+@app.get("/products/search")
+async def search_products_endpoint(q: str, db: Session = Depends(get_db)):
+    results = get_product_by_name(db, query=q)
+    return results
+
+@app.get("/products")
+async def list_products_endpoint(db: Session = Depends(get_db)):
+    return get_products(db)
