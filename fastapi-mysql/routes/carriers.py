@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from crud import get_carrier, create_carrier
+from crud import get_carrier, create_carrier, update_carrier, delete_carrier
 from models import Carrier
 
 
@@ -30,25 +30,14 @@ async def get_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{carrier_id}")
 async def update_carrier_endpoint(carrier_id: int, name: str, code: str, contact_phone: str, db: Session = Depends(get_db)):
-    carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
+    carrier = update_carrier(db, carrier_id, name, code, contact_phone)
     if carrier is None:
         raise HTTPException(status_code=404, detail="Carrier not found")
-
-    carrier.name = name
-    carrier.code = code
-    carrier.contact_phone = contact_phone
-    db.commit()
-    db.refresh(carrier)
-
     return carrier
 
 @router.delete("/{carrier_id}")
 async def delete_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
-    carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
+    carrier = delete_carrier(db, carrier_id)
     if carrier is None:
-        raise HTTPException(status_code=404, detail="Carrier not found")
-
-    db.delete(carrier)
-    db.commit()
-
+        return HTTPException(status_code=404, detail="carrier not found")
     return {"detail": "Carrier deleted"}
