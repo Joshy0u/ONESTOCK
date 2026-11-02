@@ -17,18 +17,18 @@ def get_db():
     finally:
         db.close()
 
-@router.post("/carriers")
+@router.post("/")
 async def create_carrier_endpoint(name: str, code: str, contact_phone: str, db: Session = Depends(get_db)):
     return create_carrier(db, name, code, contact_phone)
 
-@router.get("/carriers/{carrier_id}")
+@router.get("/{carrier_id}")
 async def get_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
     carrier = get_carrier(db, carrier_id)
     if carrier is None:
         raise HTTPException(status_code=404, detail="Carrier not found")
     return carrier
 
-@router.put("/carriers/{carrier_id}")
+@router.put("/{carrier_id}")
 async def update_carrier_endpoint(carrier_id: int, name: str, code: str, contact_phone: str, db: Session = Depends(get_db)):
     carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
     if carrier is None:
@@ -42,7 +42,7 @@ async def update_carrier_endpoint(carrier_id: int, name: str, code: str, contact
 
     return carrier
 
-@router.delete("/carriers/{carrier_id}")
+@router.delete("/{carrier_id}")
 async def delete_carrier_endpoint(carrier_id: int, db: Session = Depends(get_db)):
     carrier = db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
     if carrier is None:
