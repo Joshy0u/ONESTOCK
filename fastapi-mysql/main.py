@@ -33,6 +33,3 @@ def get_db():
 @app.get("/")
 async def root():
     return {"message": "OneStock API is live!"}
-
-
-# BELOW ARE THE ENDPOINTS FOR THE PRODUCTS TABLE. 
