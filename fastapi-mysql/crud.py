@@ -66,14 +66,28 @@ def get_network_inventory_position( db: Session, limit: int = 15):
     return [dict(row) for row in result.mappings().all()]
 #[dict(row) for row in result.mappings().all()]
 
-def get_replenishment_reccommendations(db: Session, as_of_date: date):
-    query_text = load_sql_query("replentish_recs.sql")
-    result = db.execute(text(query_text), {"as_of_date": as_of_date})
-    return result.mappings().all()
 
 # HUGE NOTE:
 #   THIS IS SOMETHING IM LEARNING NEW, BUT AFTER WE
 #   GET THE DATA BACK, BECAUSE ITS NOT THROUGH THE
 #   ORM DIRECTLY 
-#   
-#
+
+def get_aging_stock(db: Session, as_of_date: date):
+    query_text = load_sql_query("aging_stock.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_product_demand(db: Session):
+    query_text = load_sql_query("product_demand.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_backlog(db: Session, as_of_date: date):
+    query_text = load_sql_query("purchase_backlog.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_replenishment_reccommendations(db: Session, as_of_date: date):
+    query_text = load_sql_query("replentish_recs.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return result.mappings().all()
