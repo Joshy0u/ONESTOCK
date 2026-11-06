@@ -2,4 +2,8 @@
 .\vscode
 
 .\venv
-.\__pycache__
+fastapi-mysql/__pycache__
+
+# Ignore React node packages and build output
+frontend/node_modules/
+frontend/dist/

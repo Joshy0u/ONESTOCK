@@ -3,8 +3,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import SessionLocal
-from routes import products
-from routes import carriers
+from routes import products, carriers, analytics
+
 
 
 app = FastAPI(title="OneStock API")
@@ -20,6 +20,7 @@ app.add_middleware(
 # Include the modular routers
 app.include_router(products.router)
 app.include_router(carriers.router)
+app.include_router(analytics.router)
 
 # Create tables? (i can skip this step, tables already exist)
 
