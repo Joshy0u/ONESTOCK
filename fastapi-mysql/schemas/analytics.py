@@ -1,6 +1,20 @@
 from pydantic import BaseModel 
 from typing import Optional, List
+from datetime import date, datetime
 
+
+class AgingStock(BaseModel):
+    location: str
+    product: str
+    code: str
+    quantity_on_hand: float
+    last_received: date
+    last_sent_or_sold: date
+    value_at_cost: int
+    pct_of_network_value: int 
+
+    class Config:
+        from_attributes = True
 
 class NetworkPositionResponse(BaseModel):
     product_id: int
@@ -15,6 +29,33 @@ class NetworkPositionResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ProductDemand(BaseModel):
+    abc_class: str
+    products: int
+    pct_of_products: float
+    spend: float
+    pct_of_spend: float
+    class Config:
+        from_attributes = True
+
+
+
+class PurchaseBacklog(BaseModel):
+    po_id: int
+    supplier: str
+    location: str
+    status: str
+    expected_date: date
+    product: str
+    unit: str
+    quantity_ordered: int
+    unit_cost: float
+    qty_received: float
+    class Config:
+        from_attributes = True
+
 
 
 class ReplentishmentRecomendations(BaseModel):
