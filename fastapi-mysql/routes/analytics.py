@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from datetime import date
 from database import SessionLocal
-from schemas.analytics import NetworkPositionResponse
+from schemas.analytics import NetworkPositionResponse, ReplentishmentRecomendations
 from typing import Optional
 import crud
 
@@ -20,7 +20,7 @@ def get_db():
 def get_network_position(limit: int=15, db: Session = Depends(get_db)):
     return crud.get_network_inventory_position(db, limit=limit)
 
-@router.get("/replenishments")
+@router.get("/replenishments", response_model=list[ReplentishmentRecomendations])
 def get_replenishment_recommendations(
     as_of_date: Optional[date] = Query(default=date(2026,10,28)),
     db: Session = Depends(get_db)
