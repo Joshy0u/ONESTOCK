@@ -62,13 +62,14 @@ def create_product(db: Session, name: str, sku: str, uom_id: int, list_price: fl
 def get_network_inventory_position( db: Session, limit: int = 15):
 
     query_text = load_sql_query("network_position.sql")
-    result = db.execute(query_text, {"limit": limit})
-    return result.mappings().all
+    result = db.execute(text(query_text), {"limit": limit})
+    return [dict(row) for row in result.mappings().all()]
+#[dict(row) for row in result.mappings().all()]
 
 def get_replenishment_reccommendations(db: Session, as_of_date: date):
-    query_text = load_sql_query("replentish_recs,sql")
-    result = db.execute(query_text, {"as_of_date": as_of_date})
-    return result.mappings().all
+    query_text = load_sql_query("replentish_recs.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return result.mappings().all()
 
 # HUGE NOTE:
 #   THIS IS SOMETHING IM LEARNING NEW, BUT AFTER WE
