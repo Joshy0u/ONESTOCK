@@ -1,31 +1,53 @@
-import { catalog } from "../mocks/data";
-import type { Catalog, Product } from "../types";
+import type {
+  ActivityItem,
+  AgingStockRow,
+  Carrier,
+  InventoryPosition,
+  LocationSummary,
+  NetworkPositionRow,
+  OverviewKpis,
+  Product,
+  ProductDemandRow,
+  PurchaseBacklogRow,
+  ReplenishmentRecommendation,
+  SellThroughRow,
+  SupplierScorecardRow,
+  SupplyRiskRow,
+  ThreeWayMatchRow,
+  TransferPipelineRow,
+} from "../types";
 
-const useMocks = import.meta.env.VITE_USE_MOCKS !== "false";
-const apiBase = import.meta.env.VITE_API_BASE ?? "/api";
+// "/api" is proxied by Vite to FastAPI on 127.0.0.1:8000 (see vite.config.ts).
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
 
-async function tryLiveProducts(): Promise<Product[] | null> {
-  try {
-    const response = await fetch(`${apiBase}/products/`);
-    if (!response.ok) return null;
-    const rows = (await response.json()) as Array<Record<string, unknown>>;
-    return rows.map((row, index) => ({
-      product_id: Number(row.product_id ?? index + 1),
-      name: String(row.name ?? "Unnamed"),
-      sku: String(row.sku ?? ""),
-      category: String(row.category ?? "Uncategorized"),
-      uom: String(row.uom ?? "EA"),
-      list_price: Number(row.list_price ?? 0),
-      special_notes: row.special_notes ? String(row.special_notes) : undefined,
-    }));
-  } catch {
-    return null;
+async function get<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    throw new Error(`OneStock API ${response.status} on ${path}`);
   }
+  return (await response.json()) as T;
 }
 
-export async function loadCatalog(): Promise<Catalog> {
-  if (useMocks) return catalog;
-  const liveProducts = await tryLiveProducts();
-  if (!liveProducts) return catalog;
-  return { ...catalog, products: liveProducts };
-}
+const withDate = (path: string, asOfDate?: string) => (asOfDate ? `${path}?as_of_date=${asOfDate}` : path);
+
+export const api = {
+  // operational data
+  overview: () => get<OverviewKpis>("/analytics/overview"),
+  inventory: () => get<InventoryPosition[]>("/inventory/"),
+  locations: () => get<LocationSummary[]>("/locations/"),
+  recentActivity: (limit = 12) => get<ActivityItem[]>(`/analytics/recent-activity?limit=${limit}`),
+  carriers: () => get<Carrier[]>("/carriers/"),
+  products: () => get<Product[]>("/products/"),
+
+  // the ten core reports
+  networkPosition: (limit = 15) => get<NetworkPositionRow[]>(`/analytics/network-position?limit=${limit}`),
+  replenishments: (asOfDate?: string) => get<ReplenishmentRecommendation[]>(withDate("/analytics/replenishments", asOfDate)),
+  agingStock: (asOfDate?: string) => get<AgingStockRow[]>(withDate("/analytics/aging-stock", asOfDate)),
+  productDemand: () => get<ProductDemandRow[]>("/analytics/product-demand"),
+  purchaseBacklog: (asOfDate?: string) => get<PurchaseBacklogRow[]>(withDate("/analytics/purchase-backlog", asOfDate)),
+  sellThrough: () => get<SellThroughRow[]>("/analytics/sell-through"),
+  supplierScorecard: (asOfDate?: string) => get<SupplierScorecardRow[]>(withDate("/analytics/supplier-scorecard", asOfDate)),
+  supplyRisk: () => get<SupplyRiskRow[]>("/analytics/supply-risk"),
+  threeWayMatch: () => get<ThreeWayMatchRow[]>("/analytics/three-way-match"),
+  transferPipeline: (asOfDate?: string) => get<TransferPipelineRow[]>(withDate("/analytics/transfer-pipeline", asOfDate)),
+};

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_USE_MOCKS?: string;
+  /** Base URL for the OneStock API. Defaults to "/api", which Vite proxies to FastAPI on :8000. */
   readonly VITE_API_BASE?: string;
 }
 

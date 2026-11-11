@@ -1,56 +1,72 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { loadCatalog } from "../api/client";
-import type { Catalog, Persona } from "../types";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { api } from "../api/client";
+import type { ActivityItem, InventoryPosition, LocationSummary, OverviewKpis } from "../types";
 
-type AppContextValue = {
-  persona: Persona;
-  setPersona: (persona: Persona) => void;
-  locationId: number | "all";
-  setLocationId: (id: number | "all") => void;
-  catalog: Catalog | null;
+export type Scope = number | "all";
+
+interface AppContextValue {
+  scope: Scope;
+  setScope: (scope: Scope) => void;
+  locations: LocationSummary[];
+  overview: OverviewKpis | null;
+  inventory: InventoryPosition[];
+  /** Inventory filtered to the selected scope (all locations or one). */
+  scopedInventory: InventoryPosition[];
+  activity: ActivityItem[];
   loading: boolean;
   error: string | null;
-  toast: string | null;
-  notify: (message: string) => void;
-};
+  syncedAt: Date;
+  reload: () => void;
+}
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const personaDefaultLocation: Record<Persona, number | "all"> = {
-  hq: "all",
-  purchasing: "all",
-  dc: 1,
-  store: 3,
-};
-
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [persona, setPersonaState] = useState<Persona>("store");
-  const [locationId, setLocationId] = useState<number | "all">(3);
-  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [scope, setScope] = useState<Scope>("all");
+  const [locations, setLocations] = useState<LocationSummary[]>([]);
+  const [overview, setOverview] = useState<OverviewKpis | null>(null);
+  const [inventory, setInventory] = useState<InventoryPosition[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [syncedAt, setSyncedAt] = useState(() => new Date());
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    loadCatalog()
-      .then((data) => setCatalog(data))
-      .catch(() => setError("Could not load catalog."))
-      .finally(() => setLoading(false));
-  }, []);
+    let alive = true;
+    setLoading(true);
+    Promise.all([api.locations(), api.overview(), api.inventory(), api.recentActivity(12)])
+      .then(([locs, kpis, inv, feed]) => {
+        if (!alive) return;
+        setLocations(locs);
+        setOverview(kpis);
+        setInventory(inv);
+        setActivity(feed);
+        setError(null);
+        setSyncedAt(new Date());
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setError(err instanceof Error ? err.message : "Could not reach the OneStock API.");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [tick]);
 
-  function setPersona(next: Persona) {
-    setPersonaState(next);
-    setLocationId(personaDefaultLocation[next]);
-  }
+  const reload = useCallback(() => setTick((t) => t + 1), []);
 
-  function notify(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2800);
-  }
+  const scopedInventory = useMemo(
+    () => (scope === "all" ? inventory : inventory.filter((row) => row.location_id === scope)),
+    [inventory, scope],
+  );
 
-  const value = useMemo(
-    () => ({ persona, setPersona, locationId, setLocationId, catalog, loading, error, toast, notify }),
-    [persona, locationId, catalog, loading, error, toast],
+  const value = useMemo<AppContextValue>(
+    () => ({ scope, setScope, locations, overview, inventory, scopedInventory, activity, loading, error, syncedAt, reload }),
+    [scope, locations, overview, inventory, scopedInventory, activity, loading, error, syncedAt, reload],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
