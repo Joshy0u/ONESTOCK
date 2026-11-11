@@ -16,6 +16,7 @@ from schemas.analytics import (
     ThreeWayMatchResponse,
     TransferPipelineResponse,
 )
+from schemas.operations import ActivityItem, OverviewKpis
 import crud
 
 router = APIRouter(prefix="/analytics", tags=["Analytics & Reporting"])
@@ -97,3 +98,13 @@ def get_transfer_pipeline(
     db: Session = Depends(get_db),
 ):
     return crud.get_transfer_pipeline(db, as_of_date=as_of_date)
+
+
+@router.get("/overview", response_model=OverviewKpis)
+def get_overview(db: Session = Depends(get_db)):
+    return crud.get_overview_kpis(db)
+
+
+@router.get("/recent-activity", response_model=list[ActivityItem])
+def get_recent_activity(limit: int = Query(default=20, ge=1, le=200), db: Session = Depends(get_db)):
+    return crud.get_recent_activity(db, limit=limit)

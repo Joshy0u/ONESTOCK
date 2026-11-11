@@ -116,3 +116,26 @@ def get_transfer_pipeline(db: Session, as_of_date: date):
     query_text = load_sql_query("transfer_pipeline.sql")
     result = db.execute(text(query_text), {"as_of_date": as_of_date})
     return [dict(row) for row in result.mappings().all()]
+
+
+# ---- operational data for the UI (inventory table, overview cards, feed, map) ----
+
+def get_inventory_positions(db: Session):
+    query_text = load_sql_query("inventory_positions.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_overview_kpis(db: Session):
+    query_text = load_sql_query("overview_kpis.sql")
+    result = db.execute(text(query_text))
+    return dict(result.mappings().one())
+
+def get_recent_activity(db: Session, limit: int = 20):
+    query_text = load_sql_query("recent_activity.sql")
+    result = db.execute(text(query_text), {"limit": limit})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_locations(db: Session):
+    query_text = load_sql_query("locations.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]

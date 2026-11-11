@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import SessionLocal
-from routes import products, carriers, analytics
+from routes import products, carriers, analytics, inventory, locations
 
 
 
@@ -21,6 +21,8 @@ app.add_middleware(
 app.include_router(products.router)
 app.include_router(carriers.router)
 app.include_router(analytics.router)
+app.include_router(inventory.router)
+app.include_router(locations.router)
 
 # Create tables? (i can skip this step, tables already exist)
 
