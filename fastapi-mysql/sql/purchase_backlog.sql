@@ -10,7 +10,7 @@ SELECT
     x.qty_received,
     x.quantity_ordered - x.qty_received                           AS qty_outstanding,
     ROUND((x.quantity_ordered - x.qty_received) * x.unit_cost, 2) AS value_outstanding,
-    GREATEST(DATEDIFF(@as_of_date, x.expected_date), 0)           AS days_overdue
+    GREATEST(DATEDIFF(:as_of_date, x.expected_date), 0)           AS days_overdue
 FROM (
     SELECT
         po.po_id,

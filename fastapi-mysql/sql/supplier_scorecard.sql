@@ -17,7 +17,7 @@ po_stats AS (
     JOIN po_line pl ON pl.po_id     = po.po_id
     LEFT JOIN received rc ON rc.po_id = pl.po_id AND rc.product_id = pl.product_id
     WHERE st.code NOT IN ('DRAFT', 'CANCELLED')
-      AND po.expected_date <= @as_of_date
+      AND po.expected_date <= :as_of_date
     GROUP BY po.po_id, po.supplier_id, po.order_date, po.expected_date
 )
 SELECT *

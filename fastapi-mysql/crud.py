@@ -91,3 +91,28 @@ def get_replenishment_reccommendations(db: Session, as_of_date: date):
     query_text = load_sql_query("replentish_recs.sql")
     result = db.execute(text(query_text), {"as_of_date": as_of_date})
     return result.mappings().all()
+
+def get_sell_through(db: Session):
+    query_text = load_sql_query("store_sell_through.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_supplier_scorecard(db: Session, as_of_date: date):
+    query_text = load_sql_query("supplier_scorecard.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_supply_risk(db: Session):
+    query_text = load_sql_query("supply_risk.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_three_way_match(db: Session):
+    query_text = load_sql_query("Three_way_match.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_transfer_pipeline(db: Session, as_of_date: date):
+    query_text = load_sql_query("transfer_pipeline.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]

@@ -6,10 +6,11 @@ from datetime import date, datetime
 class AgingStock(BaseModel):
     location: str
     product: str
-    code: str
+    unit: str
     quantity_on_hand: float
-    last_received: date
-    last_sent_or_sold: date
+    last_received: Optional[date] = None        # NULL when the item has never had an IN movement
+    last_sent_or_sold: Optional[date] = None    # NULL when the item has never had an OUT movement
+    days_without_movement: int
     value_at_cost: float
     pct_of_network_value: float
 
@@ -45,18 +46,19 @@ class ProductDemand(BaseModel):
 class PurchaseBacklog(BaseModel):
     po_id: int
     supplier: str
-    location: str
-    status: str
+    deliver_to: str
+    po_status: str
     expected_date: date
     product: str
     unit: str
     quantity_ordered: float
-    unit_cost: float
     qty_received: float
+    qty_outstanding: float
+    value_outstanding: float
+    days_overdue: int
+
     class Config:
         from_attributes = True
-
-
 
 class ReplenishmentRecommendations(BaseModel):
     location: str
@@ -74,12 +76,13 @@ class ReplenishmentRecommendations(BaseModel):
         from_attributes = True 
 
 class StoreSellThrough(BaseModel):
-    location: str
+    store: str
     product: str
-    code: str
+    unit: str
     units_in: float
     units_sold: float
-    sell_through_pct: float
+    sell_through_pct: Optional[float] = None    # NULL when units_in is 0 (division guarded by NULLIF)
+    quantity_on_hand: float
     revenue: float
 
     class Config:
@@ -88,14 +91,15 @@ class StoreSellThrough(BaseModel):
 class SupplierScorecard(BaseModel):
     supplier: str
     pos_due: int
-    pos_delivered: float
-    on_time_pct: float
+    pos_delivered: int
+    on_time_pct: Optional[float] = None         # NULL until the supplier has delivered at least one PO
     fill_rate_pct: float
     promised_lead_days: float
-    actual_lead_days: float
-    avg_days_late: float
+    actual_lead_days: Optional[float] = None    # NULL until the supplier has delivered at least one PO
+    avg_days_late: Optional[float] = None       # NULL until the supplier has delivered at least one PO
+    rating: str
 
-    class Config: 
+    class Config:
         from_attributes = True
 
 class SupplyRiskResponse(BaseModel):
@@ -136,8 +140,8 @@ class TransferPipelineResponse(BaseModel):
     product_lines: int
     lines_fully_received: int
     value_shipped: float
-    ship_date: Optional[date] = None
-    delivery_date: Optional[date] = None
+    ship_date: Optional[datetime] = None        # ship_date / delivery_date carry a time of day, so datetime not date
+    delivery_date: Optional[datetime] = None
     hours_on_road: Optional[float] = None
     delivery_check: str
 

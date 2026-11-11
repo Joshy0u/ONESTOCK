@@ -11,11 +11,11 @@ SELECT
     t.ship_date,
     t.delivery_date,
     ROUND(TIMESTAMPDIFF(MINUTE, t.ship_date,
-          COALESCE(t.delivery_date, @as_of_date)) / 60, 1)        AS hours_on_road,
+          COALESCE(t.delivery_date, :as_of_date)) / 60, 1)        AS hours_on_road,
     CASE
         WHEN sh.shipment_id IS NULL                       THEN 'No shipment record'
         WHEN sh.actual_arrival IS NULL
-         AND sh.estimated_arrival < @as_of_date           THEN 'Overdue'
+         AND sh.estimated_arrival < :as_of_date           THEN 'Overdue'
         WHEN sh.actual_arrival IS NULL                    THEN 'On the way'
         WHEN sh.actual_arrival <= sh.estimated_arrival    THEN 'Arrived on time'
         ELSE 'Arrived late'
