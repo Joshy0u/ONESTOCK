@@ -1,5 +1,14 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+from datetime import date
+from pathlib import Path
+
 from models import Carrier, Product
+
+# UTILITY FUNCTION
+def load_sql_query(filename: str) -> str:
+    path = Path(__file__).parent / "sql" / filename
+    return path.read_text(encoding="utf-8")
 
 def get_carrier(db: Session, carrier_id: int):
     return db.query(Carrier).filter(Carrier.carrier_id == carrier_id).first()
@@ -49,3 +58,84 @@ def create_product(db: Session, name: str, sku: str, uom_id: int, list_price: fl
     db.commit()
     db.refresh(db_product)
     return db_product
+
+def get_network_inventory_position( db: Session, limit: int = 15):
+
+    query_text = load_sql_query("network_position.sql")
+    result = db.execute(text(query_text), {"limit": limit})
+    return [dict(row) for row in result.mappings().all()]
+#[dict(row) for row in result.mappings().all()]
+
+
+# HUGE NOTE:
+#   THIS IS SOMETHING IM LEARNING NEW, BUT AFTER WE
+#   GET THE DATA BACK, BECAUSE ITS NOT THROUGH THE
+#   ORM DIRECTLY 
+
+def get_aging_stock(db: Session, as_of_date: date):
+    query_text = load_sql_query("aging_stock.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_product_demand(db: Session):
+    query_text = load_sql_query("product_demand.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_backlog(db: Session, as_of_date: date):
+    query_text = load_sql_query("purchase_backlog.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_replenishment_reccommendations(db: Session, as_of_date: date):
+    query_text = load_sql_query("replentish_recs.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return result.mappings().all()
+
+def get_sell_through(db: Session):
+    query_text = load_sql_query("store_sell_through.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_supplier_scorecard(db: Session, as_of_date: date):
+    query_text = load_sql_query("supplier_scorecard.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_supply_risk(db: Session):
+    query_text = load_sql_query("supply_risk.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_three_way_match(db: Session):
+    query_text = load_sql_query("Three_way_match.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_transfer_pipeline(db: Session, as_of_date: date):
+    query_text = load_sql_query("transfer_pipeline.sql")
+    result = db.execute(text(query_text), {"as_of_date": as_of_date})
+    return [dict(row) for row in result.mappings().all()]
+
+
+# ---- operational data for the UI (inventory table, overview cards, feed, map) ----
+
+def get_inventory_positions(db: Session):
+    query_text = load_sql_query("inventory_positions.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]
+
+def get_overview_kpis(db: Session):
+    query_text = load_sql_query("overview_kpis.sql")
+    result = db.execute(text(query_text))
+    return dict(result.mappings().one())
+
+def get_recent_activity(db: Session, limit: int = 20):
+    query_text = load_sql_query("recent_activity.sql")
+    result = db.execute(text(query_text), {"limit": limit})
+    return [dict(row) for row in result.mappings().all()]
+
+def get_locations(db: Session):
+    query_text = load_sql_query("locations.sql")
+    result = db.execute(text(query_text))
+    return [dict(row) for row in result.mappings().all()]

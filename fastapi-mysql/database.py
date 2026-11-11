@@ -2,7 +2,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from pathlib import Path
 import os
+
+# .env lives at the repo root (one level above this package)
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
