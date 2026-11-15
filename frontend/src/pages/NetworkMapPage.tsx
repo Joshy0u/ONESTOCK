@@ -7,10 +7,18 @@ import { useApp } from "../context/AppContext";
 import { PageHeader } from "../components/PageHeader";
 import { StatusChip } from "../components/StatusChip";
 import { money, num, qty, statusLabel } from "../lib/format";
-import { NetworkScene, type HoverInfo } from "../three/NetworkScene";
+// Type-only import: the Three.js scene module (and the `three` package) is only
+// loaded at runtime when ENABLE_3D_MAP is true. See the dynamic import below.
+import type { NetworkScene, HoverInfo } from "../three/NetworkScene";
+
+/**
+ * 3D map switch. Off while we test the full stack end-to-end; the page renders a
+ * plain 2D location grid instead. Flip to `true` to bring the Three.js scene back.
+ */
+const ENABLE_3D_MAP = false;
 
 export function NetworkMapPage() {
-  const { locations, inventory, loading: appLoading, error: appError } = useApp();
+  const { locations, inventory, loading: appLoading, error: appError, reload } = useApp();
   const transfers = useApi(() => api.transferPipeline());
   const carriers = useApi(() => api.carriers());
 
@@ -22,12 +30,19 @@ export function NetworkMapPage() {
   const [showTransfers, setShowTransfers] = useState(true);
 
   useEffect(() => {
+    if (!ENABLE_3D_MAP) return;
     const el = containerRef.current;
     if (!el) return;
-    const scene = new NetworkScene(el, { onHover: setHover, onSelectLocation: setSelected });
-    sceneRef.current = scene;
+    let disposed = false;
+    let scene: NetworkScene | null = null;
+    import("../three/NetworkScene").then(({ NetworkScene: Scene }) => {
+      if (disposed) return;
+      scene = new Scene(el, { onHover: setHover, onSelectLocation: setSelected });
+      sceneRef.current = scene;
+    });
     return () => {
-      scene.dispose();
+      disposed = true;
+      scene?.dispose();
       sceneRef.current = null;
     };
   }, []);
@@ -71,13 +86,25 @@ export function NetworkMapPage() {
         }
         actions={
           <>
-            <label className="toggle">
-              <input type="checkbox" checked={showReorder} onChange={(e) => setShowReorder(e.target.checked)} /> Reorder points
-            </label>
-            <label className="toggle">
-              <input type="checkbox" checked={showTransfers} onChange={(e) => setShowTransfers(e.target.checked)} /> Transfers
-            </label>
-            <button className="btn btn--secondary" type="button" onClick={() => transfers.reload()}>
+            {ENABLE_3D_MAP ? (
+              <>
+                <label className="toggle">
+                  <input type="checkbox" checked={showReorder} onChange={(e) => setShowReorder(e.target.checked)} /> Reorder points
+                </label>
+                <label className="toggle">
+                  <input type="checkbox" checked={showTransfers} onChange={(e) => setShowTransfers(e.target.checked)} /> Transfers
+                </label>
+              </>
+            ) : null}
+            <button
+              className="btn btn--secondary"
+              type="button"
+              onClick={() => {
+                reload();
+                transfers.reload();
+                carriers.reload();
+              }}
+            >
               <RefreshCw size={16} /> Refresh
             </button>
           </>
@@ -85,6 +112,7 @@ export function NetworkMapPage() {
       />
 
       <div className="map-layout">
+        {ENABLE_3D_MAP ? (
         <div className="map-stage card">
           <div ref={containerRef} className="map-canvas" />
           {hover ? (
@@ -104,6 +132,45 @@ export function NetworkMapPage() {
             <span className="muted">Drag to orbit · scroll to zoom · click a platform to focus</span>
           </div>
         </div>
+        ) : (
+          <div className="card map-flat">
+            <div className="map-flat__head">
+              <div className="eyebrow">Locations</div>
+              <span className="muted small">3D map is turned off for now · click a location to focus it</span>
+            </div>
+            {appError ? <div className="text-danger">{appError}</div> : null}
+            {appLoading && !locations.length ? <div className="muted">Loading locations…</div> : null}
+            <div className="map-flat__grid">
+              {locations.map((l) => {
+                const alerts = l.low_stock + l.out_of_stock;
+                const tone = l.out_of_stock ? "danger" : l.low_stock ? "warn" : "ok";
+                return (
+                  <button
+                    key={l.location_id}
+                    type="button"
+                    className={`map-tile map-tile--${tone}${selected === l.location_id ? " map-tile--active" : ""}`}
+                    onClick={() => setSelected(selected === l.location_id ? null : l.location_id)}
+                  >
+                    <span className="eyebrow">{l.location_type === "DC" ? "Distribution centre" : "Store"}</span>
+                    <strong>{l.name}</strong>
+                    <span className="muted small">
+                      {l.city} {l.state}
+                    </span>
+                    <span className="map-tile__stats">
+                      {num(l.skus_stocked)} SKUs · {num(l.units_on_hand)} units · {money(l.value_on_hand, 0)}
+                    </span>
+                    <span className={`pill ${alerts ? "pill--warn" : "pill--ok"}`}>{alerts ? `${alerts} alerts` : "healthy"}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {inTransit.length ? (
+              <div className="muted small">
+                In transit: {inTransit.map((t) => `${t.from_location} → ${t.to_location}`).join(" · ")}
+              </div>
+            ) : null}
+          </div>
+        )}
 
         <aside className="map-side">
           {focused ? (

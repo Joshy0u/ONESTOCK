@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   Bell,
   Boxes,
@@ -40,6 +40,7 @@ function useClock() {
 export function AppShell() {
   const { scope, setScope, locations, scopedInventory } = useApp();
   const now = useClock();
+  const navigate = useNavigate();
   const alerts = scopedInventory.filter((r) => r.stock_status !== "IN_STOCK").length;
 
   return (
@@ -52,10 +53,16 @@ export function AppShell() {
           <span className="brand__word">onestock</span>
         </div>
         <div className="topbar__right">
-          <button className="icon-btn" type="button" aria-label="Search">
+          <button className="icon-btn" type="button" aria-label="Search inventory" title="Search inventory" onClick={() => navigate("/inventory")}>
             <Search size={18} />
           </button>
-          <button className="icon-btn" type="button" aria-label="Notifications">
+          <button
+            className="icon-btn"
+            type="button"
+            aria-label="Reorder alerts"
+            title={alerts > 0 ? `${alerts} reorder alerts` : "No reorder alerts"}
+            onClick={() => navigate("/reorder")}
+          >
             <Bell size={18} />
             {alerts > 0 ? <span className="icon-btn__dot" /> : null}
           </button>
