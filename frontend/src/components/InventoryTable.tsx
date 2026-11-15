@@ -180,7 +180,7 @@ export function InventoryTable({ rows, pageSize: initialPageSize = 7, title = "I
             setStatus("all");
           }}
         >
-          <SlidersHorizontal size={16} /> Filters
+          <SlidersHorizontal size={16} /> Clear filters
         </button>
         <span className="toolbar__spacer" />
         <label className="select-pill">
